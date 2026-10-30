@@ -1,0 +1,121 @@
+openapi: 3.0.3
+
+info:
+  title: Movie Theater Seat Reservation API
+  version: 1.0.0
+  description: >
+    This API allows customers to view available seats for a movie showing, create a temporary seat reservation, and cancel an existing reservation.
+    It supports the online movie ticket purchasing process by preventing multiple customers from selecting the same seat at the same time.
+
+paths:
+  /showings/{showingId}/seats:
+    get:
+      summary: Get available seats for a movie showing
+      parameters:
+        - name: showingId
+          in: path
+          required: true
+          description: Unique identifier for the selected movie showing.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Seat availability was returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  showingId:
+                    type: string
+                  seats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        seatId:
+                          type: string
+                        row:
+                          type: string
+                        number:
+                          type: integer
+                        available:
+                          type: boolean
+                        price:
+                          type: number
+                          format: float
+        '404':
+          description: The requested movie showing was not found.
+
+  /showings/{showingId}/reservations:
+    post:
+      summary: Reserve one or more seats for a movie showing
+      parameters:
+        - name: showingId
+          in: path
+          required: true
+          description: Unique identifier for the selected movie showing.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - customerId
+                - seatIds
+              properties:
+                customerId:
+                  type: string
+                  description: Unique identifier for the customer.
+                seatIds:
+                  type: array
+                  description: Seats the customer wants to reserve.
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Seats were reserved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationId:
+                    type: string
+                  showingId:
+                    type: string
+                  seatIds:
+                    type: array
+                    items:
+                      type: string
+                  status:
+                    type: string
+                    example: held
+                  expiresAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: The request was invalid or required information was missing.
+        '409':
+          description: One or more requested seats are no longer available.
+
+  /reservations/{reservationId}:
+    delete:
+      summary: Cancel an existing seat reservation
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: Unique identifier for the seat reservation.
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Reservation was canceled successfully.
+        '404':
+          description: The reservation was not found.
+        '409':
+          description: The reservation cannot be canceled because it has already been completed or expired.
